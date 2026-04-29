@@ -1,0 +1,422 @@
+{
+  "makes": [
+    "Audi",
+    "Avatr",
+    "BMW",
+    "BYD",
+    "Citroën",
+    "CUPRA",
+    "Dacia",
+    "Deepal",
+    "Fiat",
+    "Ford",
+    "Genesis",
+    "GMC",
+    "HiPhi",
+    "Li Auto",
+    "Lucid",
+    "Mercedes-Benz",
+    "MG",
+    "MINI",
+    "NIO",
+    "Opel",
+    "Peugeot",
+    "Polestar",
+    "Porsche",
+    "Renault",
+    "Rolls-Royce",
+    "Smart",
+    "Tesla",
+    "Toyota",
+    "Voyah",
+    "Xiaomi",
+    "Xpeng",
+    "Zeekr"
+  ],
+  "models_by_make": {
+    "Mercedes-Benz": [
+      {
+        "model": "CLA 250+ Electric (2026)",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "792 км"
+      },
+      {
+        "model": "EQE 350+",
+        "charge_type": "CCS 2",
+        "range_wltp": "639 км"
+      },
+      {
+        "model": "EQS 450+",
+        "charge_type": "CCS 2",
+        "range_wltp": "780 км"
+      },
+      {
+        "model": "EQS 580 4MATIC",
+        "charge_type": "CCS 2",
+        "range_wltp": "710 км"
+      }
+    ],
+    "BMW": [
+      {
+        "model": "i4 eDrive40",
+        "charge_type": "CCS 2",
+        "range_wltp": "590 км"
+      },
+      {
+        "model": "i4 M50",
+        "charge_type": "CCS 2",
+        "range_wltp": "520 км"
+      },
+      {
+        "model": "i7 M70 xDrive",
+        "charge_type": "CCS 2",
+        "range_wltp": "560 км"
+      },
+      {
+        "model": "i7 xDrive60",
+        "charge_type": "CCS 2",
+        "range_wltp": "625 км"
+      }
+    ],
+    "Audi": [
+      {
+        "model": "A6 e-tron Performance",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "750 км"
+      },
+      {
+        "model": "e-tron GT (facelift 2026)",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "630 км"
+      },
+      {
+        "model": "RS e-tron GT",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "595 км"
+      },
+      {
+        "model": "S6 e-tron",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "670 км"
+      }
+    ],
+    "Tesla": [
+      {
+        "model": "Cybertruck (Cyberbeast)",
+        "charge_type": "NACS",
+        "range_wltp": "515 км (+ range extender)"
+      },
+      {
+        "model": "Model 3 Long Range (Highland)",
+        "charge_type": "NACS / CCS",
+        "range_wltp": "629 км"
+      },
+      {
+        "model": "Model 3 Performance",
+        "charge_type": "NACS / CCS",
+        "range_wltp": "528 км"
+      },
+      {
+        "model": "Model S Long Range",
+        "charge_type": "NACS / CCS",
+        "range_wltp": "723 км"
+      },
+      {
+        "model": "Model S Plaid",
+        "charge_type": "NACS / CCS",
+        "range_wltp": "637 км"
+      }
+    ],
+    "Lucid": [
+      {
+        "model": "Air Grand Touring",
+        "charge_type": "CCS / 900V",
+        "range_wltp": "830 км"
+      },
+      {
+        "model": "Air Sapphire",
+        "charge_type": "CCS / 900V",
+        "range_wltp": "687 км"
+      }
+    ],
+    "Porsche": [
+      {
+        "model": "Taycan (Plus battery)",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "678 км"
+      },
+      {
+        "model": "Taycan Turbo S",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "630 км"
+      }
+    ],
+    "Polestar": [
+      {
+        "model": "2 Long Range Dual",
+        "charge_type": "CCS 2",
+        "range_wltp": "659 км"
+      },
+      {
+        "model": "5 (Dual Motor)",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "600 км"
+      }
+    ],
+    "Genesis": [
+      {
+        "model": "Electrified G80",
+        "charge_type": "CCS 2 / 800V",
+        "range_wltp": "520 км"
+      }
+    ],
+    "Rolls-Royce": [
+      {
+        "model": "Spectre",
+        "charge_type": "CCS 2",
+        "range_wltp": "530 км"
+      }
+    ],
+    "Zeekr": [
+      {
+        "model": "001 (140 kWh)",
+        "charge_type": "GB/T / 800V",
+        "range_wltp": "1032 км"
+      },
+      {
+        "model": "007 (Performance)",
+        "charge_type": "GB/T / 800V",
+        "range_wltp": "870 км"
+      },
+      {
+        "model": "009 (MPV)",
+        "charge_type": "GB/T / 800V",
+        "range_wltp": "822 км"
+      }
+    ],
+    "Xiaomi": [
+      {
+        "model": "SU7 Max",
+        "charge_type": "GB/T / 800V",
+        "range_wltp": "800 км"
+      },
+      {
+        "model": "SU7 Pro",
+        "charge_type": "GB/T",
+        "range_wltp": "700 км"
+      }
+    ],
+    "Xpeng": [
+      {
+        "model": "G9 (Performance)",
+        "charge_type": "GB/T / 800V",
+        "range_wltp": "702 км"
+      },
+      {
+        "model": "P7i (Wing Edition)",
+        "charge_type": "GB/T",
+        "range_wltp": "702 км"
+      }
+    ],
+    "Avatr": [
+      {
+        "model": "11",
+        "charge_type": "GB/T",
+        "range_wltp": "680 км"
+      },
+      {
+        "model": "12 (Dual Motor)",
+        "charge_type": "GB/T",
+        "range_wltp": "700 км"
+      }
+    ],
+    "NIO": [
+      {
+        "model": "ES8 (EL8)",
+        "charge_type": "GB/T / Swap",
+        "range_wltp": "635 км"
+      },
+      {
+        "model": "ET5 Touring",
+        "charge_type": "GB/T / Swap",
+        "range_wltp": "560 км"
+      },
+      {
+        "model": "ET7 (150 kWh Solid-State)",
+        "charge_type": "GB/T / Swap",
+        "range_wltp": "1050 км"
+      }
+    ],
+    "BYD": [
+      {
+        "model": "Han EV (Champion)",
+        "charge_type": "GB/T",
+        "range_wltp": "715 км"
+      },
+      {
+        "model": "Seal (82.5 kWh)",
+        "charge_type": "GB/T",
+        "range_wltp": "570 км"
+      },
+      {
+        "model": "Yangwang U8 (Electric)",
+        "charge_type": "GB/T",
+        "range_wltp": "1000 км (CLTC)"
+      },
+      {
+        "model": "Yangwang U9 (Hypercar)",
+        "charge_type": "GB/T",
+        "range_wltp": "450 км"
+      }
+    ],
+    "Li Auto": [
+      {
+        "model": "Mega (MPV)",
+        "charge_type": "GB/T / 800V",
+        "range_wltp": "710 км"
+      }
+    ],
+    "HiPhi": [
+      {
+        "model": "Z (2026)",
+        "charge_type": "GB/T",
+        "range_wltp": "705 км"
+      }
+    ],
+    "Deepal": [
+      {
+        "model": "SL03",
+        "charge_type": "GB/T",
+        "range_wltp": "705 км"
+      }
+    ],
+    "Voyah": [
+      {
+        "model": "Passion (Zhuiguang)",
+        "charge_type": "GB/T",
+        "range_wltp": "730 км"
+      }
+    ],
+    "Renault": [
+      {
+        "model": "5 E-Tech",
+        "charge_type": "CCS 2",
+        "range_wltp": "400 км"
+      },
+      {
+        "model": "Megane E-Tech (facelift)",
+        "charge_type": "CCS 2",
+        "range_wltp": "470 км"
+      }
+    ],
+    "Peugeot": [
+      {
+        "model": "E-3008 (Long Range)",
+        "charge_type": "CCS 2",
+        "range_wltp": "700 км"
+      },
+      {
+        "model": "E-5008",
+        "charge_type": "CCS 2",
+        "range_wltp": "660 км"
+      }
+    ],
+    "Opel": [
+      {
+        "model": "Grandland Electric",
+        "charge_type": "CCS 2",
+        "range_wltp": "700 км"
+      }
+    ],
+    "Fiat": [
+      {
+        "model": "600e",
+        "charge_type": "CCS 2",
+        "range_wltp": "400 км"
+      }
+    ],
+    "CUPRA": [
+      {
+        "model": "Born VZ",
+        "charge_type": "CCS 2",
+        "range_wltp": "599 км"
+      },
+      {
+        "model": "Tavascan",
+        "charge_type": "CCS 2",
+        "range_wltp": "547 км"
+      }
+    ],
+    "MG": [
+      {
+        "model": "Cyberster (Trophy)",
+        "charge_type": "CCS 2",
+        "range_wltp": "508 км"
+      },
+      {
+        "model": "MG4 Electric (Extended Range)",
+        "charge_type": "CCS 2",
+        "range_wltp": "520 км"
+      }
+    ],
+    "Smart": [
+      {
+        "model": "#3 Brabus",
+        "charge_type": "CCS 2",
+        "range_wltp": "415 км"
+      }
+    ],
+    "MINI": [
+      {
+        "model": "Aceman SE",
+        "charge_type": "CCS 2",
+        "range_wltp": "406 км"
+      },
+      {
+        "model": "Cooper SE (2026)",
+        "charge_type": "CCS 2",
+        "range_wltp": "402 км"
+      }
+    ],
+    "Dacia": [
+      {
+        "model": "Spring (2026 facelift)",
+        "charge_type": "CCS 2",
+        "range_wltp": "225 км"
+      }
+    ],
+    "Citroën": [
+      {
+        "model": "ë-C4 X",
+        "charge_type": "CCS 2",
+        "range_wltp": "420 км"
+      }
+    ],
+    "Toyota": [
+      {
+        "model": "bZ4X (facelift)",
+        "charge_type": "CCS 2",
+        "range_wltp": "511 км"
+      }
+    ],
+    "Ford": [
+      {
+        "model": "F-150 Lightning ER",
+        "charge_type": "NACS / CCS",
+        "range_wltp": "515 км"
+      }
+    ],
+    "GMC": [
+      {
+        "model": "Hummer EV Pickup (3X)",
+        "charge_type": "CCS / 800V",
+        "range_wltp": "613 км"
+      },
+      {
+        "model": "Sierra EV Denali",
+        "charge_type": "CCS / 800V",
+        "range_wltp": "708 км"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+# Environment and secrets
+.env
+.env.*
+!*.env.example
+backend/.env
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Node / frontend tooling
+node_modules/
+dist/
+build/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Uploads / runtime files
+backend/app/static/uploads/*
+!backend/app/static/uploads/.gitkeep

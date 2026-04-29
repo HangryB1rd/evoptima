@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" href="favicon.ico?v=EVOPTIMA-V16-2026-04-22" sizes="any" />
+  <title>EVOptima</title>
+  <link rel="stylesheet" href="styles.css?v=EVOPTIMA-V16-2026-04-22" />
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <img src="logo-evoptima.jpeg" alt="EVOptima logo" />
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span>EVOptima</span>
+        <span class="brand-subtitle" id="brandSubtitle">интеллектуальный AI-помощник</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="nav-btn" id="navMapBtn">Карта</button>
+      <button class="nav-btn" id="navProfileBtn">Профиль</button>
+      <button class="theme-btn" id="themeBtn" aria-label="Тема">☀️</button>
+      <div class="lang-wrap">
+        <button class="lang-btn" id="langBtn">RU ▾</button>
+        <div class="lang-menu" id="langMenu">
+          <button class="menu-item" type="button" data-lang="RU">Русский</button>
+          <button class="menu-item" type="button" data-lang="EN">English</button>
+          <button class="menu-item" type="button" data-lang="DE">Deutsch</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="view" id="mapView">
+      <div class="route-layout">
+        <section class="shell map-shell">
+          <div id="map"></div>
+          <div class="map-ui">
+            <button class="map-control" id="zoomInBtn" type="button">+</button>
+            <button class="map-control" id="zoomOutBtn" type="button">−</button>
+            <button class="map-control" id="geoBtn" type="button" title="Геопозиция">◎</button>
+          </div>
+        </section>
+
+        <section class="shell chat-bottom">
+          <div class="chat-header">
+            <div class="bot-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#9ed8ff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="7" width="14" height="11" rx="4"></rect>
+                <path d="M9 7V5m6 2V5M9.5 12h.01M14.5 12h.01M8.5 15c1 .9 2.2 1.3 3.5 1.3s2.5-.4 3.5-1.3"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="chat-title" id="chatTitle">EVOptima AI</div>
+              <div class="brand-subtitle" id="chatSubtitle">Планирование поездок для электромобилей</div>
+            </div>
+          </div>
+          <div class="messages" id="messages"></div>
+          <div class="input-bar">
+            <div class="input-wrap">
+              <input id="chatInput" type="text" placeholder="Чат скоро будет доступен" disabled />
+              <button class="send-btn" id="sendBtn" type="button" disabled>Недоступно</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="shell route-panel">
+          <div>
+            <div class="route-title" id="routeTitle">Параметры поездки</div>
+            <div class="route-sub" id="routeSub">Адрес отправления можно подставить автоматически или ввести вручную. Для адреса назначения можно кликнуть по карте или ввести его самостоятельно.</div>
+          </div>
+
+          <div class="field-list">
+            <div class="field">
+              <label for="fromInput" id="fromLabel">Откуда</label>
+              <textarea id="fromInput" rows="2" placeholder="Определяется автоматически или вводится вручную"></textarea>
+            </div>
+            <div class="field">
+              <label for="toInput" id="toLabel">Куда</label>
+              <textarea id="toInput" rows="2" placeholder="Выберите точку на карте или введите адрес"></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field dropdown-wrap">
+                <label id="makeLabel">Марка</label>
+                <input id="makeInput" type="text" autocomplete="off" placeholder="Выберите марку" />
+                <div class="dropdown-panel" id="makeDropdown">
+                  <div class="dropdown-search"><input id="makeSearch" type="text" placeholder="Поиск..." /></div>
+                  <div class="dropdown-items" id="makeItems"></div>
+                </div>
+              </div>
+              <div class="field dropdown-wrap">
+                <label id="modelLabel">Модель</label>
+                <input id="modelInput" type="text" autocomplete="off" placeholder="Выберите модель" />
+                <div class="dropdown-panel" id="modelDropdown">
+                  <div class="dropdown-search"><input id="modelSearch" type="text" placeholder="Поиск..." /></div>
+                  <div class="dropdown-items" id="modelItems"></div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="batteryInput" id="batteryLabel">Заряд, %</label>
+              <input id="batteryInput" type="number" min="0" max="100" placeholder="Например, 54" />
+            </div>
+          </div>
+
+          <button class="primary-btn" id="routeBtn" type="button">Построить маршрут</button>
+          <div class="route-plan hidden" id="routePlanResult" aria-live="polite"></div>
+        </aside>
+      </div>
+
+      <section class="shell chat-bottom">
+        <div class="chat-header">
+          <div class="bot-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#9ed8ff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="7" width="14" height="11" rx="4"></rect>
+              <path d="M9 7V5m6 2V5M9.5 12h.01M14.5 12h.01M8.5 15c1 .9 2.2 1.3 3.5 1.3s2.5-.4 3.5-1.3"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="chat-title" id="chatTitle">EVOptima AI</div>
+            <div class="brand-subtitle" id="chatSubtitle">Планирование поездок для электромобилей</div>
+          </div>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="input-bar">
+          <div class="input-wrap">
+            <input id="chatInput" type="text" placeholder="Чат скоро будет доступен" disabled />
+            <button class="send-btn" id="sendBtn" type="button" disabled>Недоступно</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="view" id="profileView">
+      <div class="shell profile-shell">
+        <div class="profile-top">
+          <div class="card">
+            <div class="profile-hero">
+              <div class="avatar-wrap" id="avatarWrap" style="display:none">
+                <div class="profile-avatar" id="profileAvatar">EV</div>
+                <button class="mini-btn" id="editPhotoBtn" type="button">Изменить фото</button>
+                <input type="file" id="photoInput" accept="image/*" class="hidden" />
+              </div>
+              <div class="profile-user-meta">
+                <div id="loggedOutBox">
+                  <div class="nick" id="profileTitle">Профиль</div>
+                  <div class="mail" id="profileIntro"></div>
+                  <button class="login-btn" id="loginBtn" type="button">Войти в аккаунт</button>
+                </div>
+                <div id="loggedInBox" style="display:none">
+                  <div class="name-row">
+                    <div class="nick" id="profileNick">EVOptima</div>
+                    <button class="mini-btn icon-only" id="editNameBtn" type="button" title="Изменить имя">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>
+                    </button>
+                  </div>
+                  <div class="mail" id="profileMail"></div>
+                  <div class="name-edit" id="nameEditRow">
+                    <input id="nameInput" type="text" placeholder="Новое имя" />
+                    <button class="mini-btn" id="saveNameBtn" type="button">Сохранить</button>
+                  </div>
+                  <button class="login-btn" id="logoutBtn" type="button">Выйти из аккаунта</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="statsTitle">Статистика пользователей</h3>
+            <div class="stats-list">
+              <div class="stat-row"><span id="statsUsersLabel">Активных пользователей за месяц</span><strong>1 248</strong></div>
+              <div class="stat-row"><span id="statsTripsLabel">Среднее число поездок в неделю</span><strong>5,6</strong></div>
+              <div class="stat-row"><span id="statsMapLabel">Планирование через карту</span><strong>78%</strong></div>
+              <div class="stat-row"><span id="statsBatteryLabel">Средняя экономия заряда на маршруте</span><strong>12%</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-grid">
+          <div class="card">
+            <h3 id="subscriptionTitleCard">Подписка</h3>
+            <div class="meta" id="subscriptionMeta">У вас есть 5 пробных запросов</div>
+            <div style="margin-top:12px"><button class="primary-btn" id="buySubscriptionBtn" type="button">Купить подписку</button></div>
+          </div>
+          <div class="card">
+            <h3 id="historyTitle">История поездок</h3>
+            <div class="history-box" id="tripHistoryBox"><div class="empty" id="tripHistory">История поездок пуста.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="faq-line">
+      <button class="faq-toggle" id="faqToggle" type="button">FAQ</button>
+      <div class="social-links">
+        <a class="social-link" href="https://t.me/+u80NjDQpId01M2Uy" target="_blank" rel="noreferrer" aria-label="Telegram" title="Telegram">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.4 4.6a1.7 1.7 0 0 0-1.8-.2L3.7 10.8a1.1 1.1 0 0 0 .1 2.1l3.8 1.3 1.5 4.7a1.1 1.1 0 0 0 1.9.4l2.2-2.7 4.4 3.3a1.7 1.7 0 0 0 2.7-1L22 6.2a1.7 1.7 0 0 0-.6-1.6ZM9.4 13.7l7.8-5.6-6.1 6.6-.2 2.8-1.5-3.8Z"/></svg>
+        </a>
+        <a class="social-link" href="https://max.ru/join/ZWUdfXsSpWMmJ76GHrnJQzvInmeAFR_0VvvKdfZyq0c" target="_blank" rel="noreferrer" aria-label="Max" title="Max"><img src="max-logo.jpeg" alt="Max" /></a>
+      </div>
+    </div>
+    <div class="faq-panel" id="faqPanel"></div>
+    <div class="footer-note" id="footerNote">стартап кафедры АСУ 09.03.01</div>
+  </footer>
+</div>
+
+<div class="modal-overlay" id="subscriptionOverlay" aria-hidden="true">
+  <div class="auth-card modal">
+    <div class="route-title" id="modalSubscriptionTitle" style="margin-bottom:8px">Подписка EVOptima</div>
+    <div class="route-sub" id="modalSubscriptionText" style="margin-bottom:14px">Подписка снимает лимит пробных запросов, открывает расширенные рекомендации по поездке, помогает находить зарядки и удобнее хранить историю маршрутов.</div>
+    <div class="card" style="padding:14px;margin-bottom:14px">
+      <div class="route-title" id="modalSubscriptionPrice" style="font-size:16px;margin-bottom:6px">499 ₽ / месяц</div>
+      <div class="route-sub" id="modalSubscriptionHint">В прототипе оплата имитируется. После подтверждения подписка активируется сразу.</div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="ghost-btn" id="subscriptionLaterBtn" type="button">Позже</button>
+      <button class="primary-btn" id="subscriptionPayBtn" type="button">Перейти к оплате</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="alertOverlay" aria-hidden="true">
+  <div class="auth-card modal">
+    <div class="route-title" id="alertTitle" style="margin-bottom:8px">Внимание</div>
+    <div class="route-sub" id="alertText" style="margin-bottom:14px">Заполните обязательные поля.</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="primary-btn" id="alertOkBtn" type="button">Понятно</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js?v=EVOPTIMA-V16-2026-04-22"></script>
+</body>
+</html>
