@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .config import get_settings
 from .db import Base, engine
-from .routers import auth, profile, vehicles, faq, trips, subscription, chat, charging
+from .routers import auth, profile, vehicles, faq, trips, subscription, chat, charging, rss
 
 settings = get_settings()
 Base.metadata.create_all(bind=engine)
@@ -35,3 +35,4 @@ app.include_router(trips.router, prefix="/api/trips", tags=["trips"])
 app.include_router(subscription.router, prefix="/api/subscription", tags=["subscription"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(charging.router, prefix="/api/charging", tags=["charging"])
+app.include_router(rss.router, prefix="/rss", tags=["rss"])
