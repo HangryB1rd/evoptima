@@ -16,6 +16,9 @@ class Settings:
     OPENCHARGEMAP_API_KEY: str = os.getenv("OPENCHARGEMAP_API_KEY", "")
     OPENCHARGEMAP_USER_AGENT: str = os.getenv("OPENCHARGEMAP_USER_AGENT", "EVOptima/1.0")
     FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://127.0.0.1:5500")
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11435")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+    OLLAMA_TIMEOUT_SECONDS: int = int(os.getenv("OLLAMA_TIMEOUT_SECONDS", "90"))
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 

@@ -34,9 +34,9 @@ button,input,textarea{font:inherit}
 a{text-decoration:none;color:inherit}
 img{max-width:100%}
 .app{min-height:100vh;display:grid;grid-template-rows:var(--header-h) auto auto}
-header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);backdrop-filter:blur(10px);background:color-mix(in srgb,var(--panel) 88%, transparent)}
-.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:22px;letter-spacing:.2px}
-.brand img{width:42px;height:42px;border-radius:12px;object-fit:cover;display:block;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+header{position:sticky;top:0;z-index:100;height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.06);backdrop-filter:blur(10px);background:color-mix(in srgb,var(--panel) 88%, transparent);overflow:visible}
+.brand{height:100%;display:flex;align-items:flex-start;min-width:0}
+.brand-logo{display:block;width:auto;height:145px;max-width:42vw;object-fit:contain;transform:translateY(-33px)}
 .brand-subtitle{font-size:12px;font-weight:600;color:var(--muted)}
 .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .nav-btn,.lang-btn,.menu-item,.theme-btn,.ghost-btn,.login-btn,.mini-btn,.send-btn,.primary-btn,.map-control,.back-btn{
@@ -179,9 +179,9 @@ footer{border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:co
   .route-sub{max-width:none;font-size:12px}
   .field textarea{min-height:64px}
 
-  header{padding:14px 14px}
+  header{padding:0 14px}
   .top-actions{gap:8px;justify-content:flex-end}
-  .brand{font-size:19px}
+  .brand-logo{height:125px;max-width:42vw;transform:translateY(-23px)}
   main{padding:12px}
   .map-shell,#map{min-height:380px}
   .input-wrap{flex-direction:column}

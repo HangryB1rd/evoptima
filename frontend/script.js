@@ -1,4 +1,4 @@
-window.EVOPTIMA_BUILD = 'EVOPTIMA-V16-2026-04-22';
+window.EVOPTIMA_BUILD = 'EVOPTIMA-V22-2026-04-30';
 console.log('EVOptima build:', window.EVOPTIMA_BUILD);
 
 (() => {
@@ -19,6 +19,8 @@ console.log('EVOptima build:', window.EVOPTIMA_BUILD);
   let destinationAddress = '';
   let faqLoaded = false;
   let faqItems = [];
+  let latestRoutePlan = null;
+  let latestRouteRequest = null;
 
 const FAQ_CATALOG = {
   "RU": [
@@ -134,7 +136,7 @@ const FAQ_CATALOG = {
       fromPlaceholder:'Определяется автоматически или вводится вручную', toPlaceholder:'Выберите точку на карте или введите адрес',
       makePlaceholder:'Выберите марку', modelPlaceholder:'Выберите модель', batteryPlaceholder:'Например, 54',
       search:'Поиск...', noResults:'Ничего не найдено',
-      chatbot:'EVOptima AI', chatbotSub:'Планирование поездок для электромобилей', send:'Недоступно', messagePlaceholder:'Чат скоро будет доступен', chatDisabledNotice:'Чат будет доступен после подключения ИИ.', guestSubscriptionHint:'Чтобы получить пробные запросы и купить подписку, войдите в аккаунт.', routeLoginRequired:'Чтобы строить маршруты, войдите в аккаунт.', mapLoadFailed:'Не удалось загрузить Яндекс.Карту. Проверьте интернет и API-ключ.',
+      chatbot:'EVOptima AI', chatbotSub:'Планирование поездок для электромобилей', send:'Отправить', messagePlaceholder:'Напишите сообщение', chatDisabledNotice:'Чат подключен к AI.', guestSubscriptionHint:'Чтобы получить пробные запросы и купить подписку, войдите в аккаунт.', routeLoginRequired:'Чтобы строить маршруты, войдите в аккаунт.', mapLoadFailed:'Не удалось загрузить Яндекс.Карту. Проверьте интернет и API-ключ.',
       welcome:'Здравствуйте! Я EVOptima AI. Подскажите, пожалуйста: куда вы едете, какая у вас марка и модель автомобиля и сколько сейчас заряда?',
       welcomeWithAddress: a => `Здравствуйте! Я EVOptima AI. Я уже определил ваш адрес: ${a}. Подскажите, пожалуйста: куда вы едете, какая у вас марка и модель автомобиля и сколько сейчас заряда?`,
       mapSelectedDestination: a => `Я отметил точку назначения: ${a}. Могу помочь с маршрутом, зарядками, остановками на еду и бытовыми вопросами в дороге.`,
@@ -157,7 +159,7 @@ const FAQ_CATALOG = {
       fromPlaceholder:'Detected automatically or entered manually', toPlaceholder:'Choose a point on the map or enter an address',
       makePlaceholder:'Choose make', modelPlaceholder:'Choose model', batteryPlaceholder:'For example, 54',
       search:'Search...', noResults:'No results',
-      chatbot:'EVOptima AI', chatbotSub:'EV trip planning', send:'Unavailable', messagePlaceholder:'Chat will be available soon', chatDisabledNotice:'The chat will be available after the AI connection is added.', guestSubscriptionHint:'Log in to get trial requests and buy a subscription.', routeLoginRequired:'Log in to build routes.', mapLoadFailed:'Failed to load Yandex Map. Check your internet connection and API key.',
+      chatbot:'EVOptima AI', chatbotSub:'EV trip planning', send:'Send', messagePlaceholder:'Type a message', chatDisabledNotice:'The chat is connected to AI.', guestSubscriptionHint:'Log in to get trial requests and buy a subscription.', routeLoginRequired:'Log in to build routes.', mapLoadFailed:'Failed to load Yandex Map. Check your internet connection and API key.',
       welcome:'Hello! I am EVOptima AI. Please tell me where you are going, what the make and model of your car is, and what your battery level is.',
       welcomeWithAddress: a => `Hello! I am EVOptima AI. I have already determined your address: ${a}. Please tell me where you are going, what the make and model of your car is, and what your battery level is.`,
       mapSelectedDestination: a => `I marked the destination point: ${a}. I can help with the route, charging points, food stops and useful roadside stops.`,
@@ -180,7 +182,7 @@ const FAQ_CATALOG = {
       fromPlaceholder:'Automatisch erkannt oder manuell eingegeben', toPlaceholder:'Punkt auf der Karte wählen oder Adresse eingeben',
       makePlaceholder:'Marke wählen', modelPlaceholder:'Modell wählen', batteryPlaceholder:'Zum Beispiel 54',
       search:'Suche...', noResults:'Keine Treffer',
-      chatbot:'EVOptima AI', chatbotSub:'Fahrtenplanung für Elektroautos', send:'Nicht verfügbar', messagePlaceholder:'Chat wird bald verfügbar sein', chatDisabledNotice:'Der Chat wird verfügbar sein, sobald die KI angebunden ist.', guestSubscriptionHint:'Melden Sie sich an, um Testanfragen zu erhalten und ein Abo zu kaufen.', routeLoginRequired:'Melden Sie sich an, um Routen zu erstellen.', mapLoadFailed:'Die Yandex-Karte konnte nicht geladen werden. Prüfen Sie die Internetverbindung und den API-Schlüssel.',
+      chatbot:'EVOptima AI', chatbotSub:'Fahrtenplanung für Elektroautos', send:'Senden', messagePlaceholder:'Nachricht eingeben', chatDisabledNotice:'Der Chat ist mit AI verbunden.', guestSubscriptionHint:'Melden Sie sich an, um Testanfragen zu erhalten und ein Abo zu kaufen.', routeLoginRequired:'Melden Sie sich an, um Routen zu erstellen.', mapLoadFailed:'Die Yandex-Karte konnte nicht geladen werden. Prüfen Sie die Internetverbindung und den API-Schlüssel.',
       welcome:'Hallo! Ich bin EVOptima AI. Bitte sagen Sie mir, wohin Sie fahren, welche Marke und welches Modell Ihr Auto hat und wie hoch Ihr Akkustand ist.',
       welcomeWithAddress: a => `Hallo! Ich bin EVOptima AI. Ich habe Ihre Adresse bereits bestimmt: ${a}. Bitte sagen Sie mir, wohin Sie fahren, welche Marke und welches Modell Ihr Auto hat und wie hoch Ihr Akkustand ist.`,
       mapSelectedDestination: a => `Ich habe den Zielpunkt markiert: ${a}. Ich kann bei der Route, Ladesäulen, Essensstopps und nützlichen Halten helfen.`,
@@ -199,6 +201,9 @@ const FAQ_CATALOG = {
   };
 
   const $ = id => document.getElementById(id);
+  const allById = id => Array.from(document.querySelectorAll(`#${id}`));
+  const visibleById = id => allById(id).find(el => el.getClientRects().length) || $(id);
+  const forEachById = (id, fn) => allById(id).forEach(fn);
   const t = key => (tr[currentLang] && tr[currentLang][key]) || (tr.RU[key]) || key;
 
   const GUEST_TRIAL_LIMIT = 5;
@@ -246,6 +251,8 @@ function clearRenderedRoute() {
 }
 
 function clearRoutePlan() {
+  latestRoutePlan = null;
+  latestRouteRequest = null;
   const box = $('routePlanResult');
   if (!box) return;
   box.classList.add('hidden');
@@ -338,12 +345,16 @@ function resetProfileToLoggedOut() {
     if ($('batteryLabel')) $('batteryLabel').textContent = t('battery');
     if ($('routeBtn')) $('routeBtn').textContent = t('buildRoute');
 
-    if ($('chatTitle')) $('chatTitle').textContent = t('chatbot');
-    if ($('chatSubtitle')) $('chatSubtitle').textContent = t('chatbotSub');
-    if ($('sendBtn')) $('sendBtn').textContent = t('send');
-    if ($('chatInput')) $('chatInput').placeholder = t('messagePlaceholder');
-    if ($('chatInput')) $('chatInput').disabled = true;
-    if ($('sendBtn')) $('sendBtn').disabled = true;
+    forEachById('chatTitle', el => { el.textContent = t('chatbot'); });
+    forEachById('chatSubtitle', el => { el.textContent = t('chatbotSub'); });
+    forEachById('sendBtn', el => {
+      el.textContent = t('send');
+      el.disabled = false;
+    });
+    forEachById('chatInput', el => {
+      el.placeholder = t('messagePlaceholder');
+      el.disabled = false;
+    });
 
 
     if ($('fromInput')) $('fromInput').placeholder = t('fromPlaceholder');
@@ -600,6 +611,17 @@ function appendMessage(text, role='bot') {
   async function setDestination(coords) {
     destinationCoords = coords;
     destinationAddress = '';
+    clearRoutePlan();
+    try {
+      if (routeLine && map) {
+        map.geoObjects.remove(routeLine);
+        routeLine = null;
+      }
+      if (routeStopCollection && map) {
+        map.geoObjects.remove(routeStopCollection);
+        routeStopCollection = null;
+      }
+    } catch {}
     if (destinationPlacemark) map.geoObjects.remove(destinationPlacemark);
     destinationPlacemark = new ymaps.Placemark(coords, {}, { preset: 'islands#redDotIcon' });
     map.geoObjects.add(destinationPlacemark);
@@ -848,6 +870,7 @@ function appendMessage(text, role='bot') {
     try {
       if (routeLine) map.geoObjects.remove(routeLine);
     } catch {}
+    clearRoutePlan();
 
 
     try {
@@ -874,6 +897,17 @@ function appendMessage(text, role='bot') {
           save_trip: true,
         })
       });
+      latestRouteRequest = {
+        from_address: from || '',
+        to_address: to || '',
+        vehicle_make: make || null,
+        vehicle_model: model || null,
+        battery_percent: battery || null,
+        from_coords: fromCoords ? { lat: fromCoords[0], lon: fromCoords[1] } : null,
+        to_coords: toCoords ? { lat: toCoords[0], lon: toCoords[1] } : null,
+        estimated_route_distance_km: routeDistanceKm,
+      };
+      latestRoutePlan = plan;
       renderRoutePlan(plan);
       renderRouteStopMarkers(plan.stops);
       const plannedFrom = plan.from_point ? [plan.from_point.lat, plan.from_point.lon] : (fromCoords || from);
@@ -899,10 +933,140 @@ function appendMessage(text, role='bot') {
     }
   }
 
-  
-async function sendChatMessage() {
-  return;
-}
+  function appendChatMessage(role, text) {
+    const box = visibleById('messages');
+    if (!box) return;
+    const item = document.createElement('div');
+    item.className = `bubble ${role === 'user' ? 'user' : 'bot'}`;
+    item.textContent = text;
+    box.appendChild(item);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function compactRoutePoint(point) {
+    if (!point) return null;
+    const lat = Number(point.lat ?? point[0]);
+    const lon = Number(point.lon ?? point[1]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    return {
+      lat: Number(lat.toFixed(6)),
+      lon: Number(lon.toFixed(6)),
+    };
+  }
+
+  function compactRouteStop(stop) {
+    const alternatives = Array.isArray(stop.alternatives)
+      ? stop.alternatives.slice(0, 3).map(item => ({
+          title: item.title || item.name || null,
+          address: item.address || null,
+          town: item.town || null,
+          distance_km: (item.distance_km ?? item.distance) || null,
+          power_kw: item.charger_power_kw ?? item.power_kw ?? null,
+          status: item.status || null,
+        }))
+      : [];
+    return {
+      order: stop.order,
+      title: stop.title || null,
+      address: stop.address || null,
+      town: stop.town || null,
+      point: compactRoutePoint(stop.lat != null && stop.lon != null ? { lat: stop.lat, lon: stop.lon } : null),
+      distance_from_start_km: stop.distance_from_start_km ?? null,
+      search_radius_km: stop.search_radius_km ?? null,
+      battery_on_arrival_percent: stop.battery_on_arrival_percent ?? null,
+      recommended_charge_to_percent: stop.recommended_charge_to_percent ?? null,
+      estimated_charge_kwh: stop.estimated_charge_kwh ?? null,
+      estimated_charge_minutes: stop.estimated_charge_minutes ?? null,
+      charger_power_kw: stop.charger_power_kw ?? null,
+      connector_match: !!stop.connector_match,
+      vehicle_connector: stop.vehicle_connector || null,
+      reachable_with_current_charge: stop.reachable_with_current_charge !== false,
+      status: stop.status || null,
+      connections_count: stop.connections_count ?? null,
+      connection_types: Array.isArray(stop.connection_types) ? stop.connection_types : [],
+      alternatives,
+    };
+  }
+
+  function sampleRouteGeometry(points) {
+    if (!Array.isArray(points) || !points.length) return [];
+    const indexes = [0, 1, Math.floor(points.length / 2), points.length - 2, points.length - 1]
+      .filter((index, position, arr) => index >= 0 && index < points.length && arr.indexOf(index) === position);
+    return indexes.map(index => compactRoutePoint(points[index])).filter(Boolean);
+  }
+
+  function getRoutePlanChatContext() {
+    if (!latestRoutePlan) return null;
+    const plan = latestRoutePlan;
+    const geometry = Array.isArray(plan.route_geometry) ? plan.route_geometry : [];
+    return {
+      built: true,
+      request: latestRouteRequest,
+      summary: plan.summary || null,
+      from_point: compactRoutePoint(plan.from_point),
+      to_point: compactRoutePoint(plan.to_point),
+      estimated_distance_km: plan.estimated_distance_km ?? null,
+      estimated_consumption_kwh_per_100km: plan.estimated_consumption_kwh_per_100km ?? null,
+      usable_battery_kwh: plan.usable_battery_kwh ?? null,
+      current_battery_percent: plan.current_battery_percent ?? null,
+      target_arrival_battery_percent: plan.target_arrival_battery_percent ?? null,
+      estimated_energy_needed_kwh: plan.estimated_energy_needed_kwh ?? null,
+      estimated_arrival_battery_without_charging_percent: plan.estimated_arrival_battery_without_charging_percent ?? null,
+      estimated_drive_minutes: plan.estimated_drive_minutes ?? null,
+      estimated_charging_minutes: plan.estimated_charging_minutes ?? null,
+      estimated_trip_minutes: plan.estimated_trip_minutes ?? null,
+      charging_required: !!plan.charging_required,
+      stops_count: Array.isArray(plan.stops) ? plan.stops.length : 0,
+      stops: Array.isArray(plan.stops) ? plan.stops.map(compactRouteStop) : [],
+      warnings: Array.isArray(plan.warnings) ? plan.warnings.filter(Boolean) : [],
+      route_geometry_source: plan.route_geometry_source || null,
+      route_geometry_points_count: geometry.length,
+      route_geometry_sample: sampleRouteGeometry(geometry),
+    };
+  }
+
+  function getChatContext() {
+    return {
+      from_address: $('fromInput')?.value.trim() || lastKnownAddress || null,
+      to_address: $('toInput')?.value.trim() || destinationAddress || null,
+      vehicle_make: $('makeInput')?.value.trim() || null,
+      vehicle_model: $('modelInput')?.value.trim() || null,
+      battery_percent: $('batteryInput')?.value.trim() || null,
+      current_location: compactRoutePoint(lastKnownLocation),
+      destination_point: compactRoutePoint(destinationCoords),
+      route_plan: getRoutePlanChatContext(),
+    };
+  }
+
+  async function sendChatMessage() {
+    const input = visibleById('chatInput');
+    const sendButtons = allById('sendBtn');
+    const message = input?.value.trim();
+    if (!message) return;
+
+    appendChatMessage('user', message);
+    input.value = '';
+    input.disabled = true;
+    sendButtons.forEach(btn => { btn.disabled = true; });
+
+    try {
+      const data = await api('/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          context: getChatContext(),
+        }),
+      });
+      appendChatMessage('bot', data.reply || 'AI не вернул ответ.');
+    } catch (err) {
+      appendChatMessage('bot', err?.message || 'Не удалось получить ответ AI.');
+    } finally {
+      input.disabled = false;
+      sendButtons.forEach(btn => { btn.disabled = false; });
+      input.focus();
+    }
+  }
 
 
   
@@ -1132,9 +1296,13 @@ function openSubscriptionModal() {
     $('editPhotoBtn').addEventListener('click', () => $('photoInput').click());
     $('photoInput').addEventListener('change', e => handlePhotoUpload(e.target.files && e.target.files[0]));
     $('routeBtn').addEventListener('click', buildRoute);
-    $('sendBtn').disabled = true;
-    $('chatInput').disabled = true;
-    $('sendBtn').addEventListener('click', sendChatMessage);
+    forEachById('sendBtn', btn => btn.addEventListener('click', sendChatMessage));
+    forEachById('chatInput', input => input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    }));
     $('subscriptionLaterBtn').addEventListener('click', closeSubscriptionModal);
     $('subscriptionPayBtn').addEventListener('click', activateSubscription);
     $('alertOkBtn')?.addEventListener('click', closeAlertModal);
