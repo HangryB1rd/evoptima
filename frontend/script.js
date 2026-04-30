@@ -16,6 +16,7 @@ console.log('EVOptima build:', window.EVOPTIMA_BUILD);
   let lastKnownLocation = null;
   let lastKnownAddress = localStorage.getItem('evoptima-last-address') || '';
   let destinationCoords = null;
+  let destinationAddress = '';
   let faqLoaded = false;
   let faqItems = [];
 
@@ -239,6 +240,7 @@ function clearRenderedRoute() {
     }
   } catch {}
   destinationCoords = null;
+  destinationAddress = '';
   if ($('toInput')) $('toInput').value = '';
   clearRoutePlan();
 }
@@ -294,12 +296,15 @@ function resetProfileToLoggedOut() {
             const data = await res.json();
             detail = data.detail || data.message || detail;
           } catch {}
-          throw new Error(detail);
+          const error = new Error(detail);
+          error.status = res.status;
+          throw error;
         }
         const ct = res.headers.get('content-type') || '';
         if (base !== savedBase) localStorage.setItem('evoptima-api-base', base);
         return ct.includes('application/json') ? res.json() : res.text();
       } catch (err) {
+        if (err && err.status) throw err;
         if (i === bases.length - 1) throw err;
       }
     }
@@ -485,6 +490,55 @@ function appendMessage(text, role='bot') {
     }
   }
 
+  function normalizeAddress(value) {
+    return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  function isValidCoords(coords) {
+    return Array.isArray(coords)
+      && coords.length === 2
+      && Number.isFinite(Number(coords[0]))
+      && Number.isFinite(Number(coords[1]));
+  }
+
+  async function geocodeAddress(address) {
+    if (!address) return null;
+    try {
+      await ensureYMaps();
+      const result = await ymaps.geocode(address, { results: 1 });
+      const first = result.geoObjects.get(0);
+      const coords = first && first.geometry && first.geometry.getCoordinates();
+      return isValidCoords(coords) ? [Number(coords[0]), Number(coords[1])] : null;
+    } catch (err) {
+      console.warn('Failed to geocode address', address, err);
+      return null;
+    }
+  }
+
+  async function resolveRoutePoint(address, cachedCoords, cachedAddress) {
+    const normalizedAddress = normalizeAddress(address);
+    if (isValidCoords(cachedCoords) && (!normalizedAddress || normalizeAddress(cachedAddress) === normalizedAddress)) {
+      return [Number(cachedCoords[0]), Number(cachedCoords[1])];
+    }
+    return geocodeAddress(address);
+  }
+
+  async function estimateRouteDistanceKm(fromCoords, toCoords) {
+    if (!isValidCoords(fromCoords) || !isValidCoords(toCoords)) return null;
+    try {
+      await ensureYMaps();
+      const route = await ymaps.route([fromCoords, toCoords], {
+        mapStateAutoApply: false,
+        routingMode: 'auto',
+      });
+      const lengthMeters = route && typeof route.getLength === 'function' ? route.getLength() : null;
+      return Number.isFinite(lengthMeters) && lengthMeters > 0 ? Math.round(lengthMeters / 100) / 10 : null;
+    } catch (err) {
+      console.warn('Failed to estimate route distance', err);
+      return null;
+    }
+  }
+
   function persistLocation(coords) {
     lastKnownLocation = coords;
     localStorage.setItem('evoptima-last-location', JSON.stringify(coords));
@@ -545,11 +599,13 @@ function appendMessage(text, role='bot') {
 
   async function setDestination(coords) {
     destinationCoords = coords;
+    destinationAddress = '';
     if (destinationPlacemark) map.geoObjects.remove(destinationPlacemark);
     destinationPlacemark = new ymaps.Placemark(coords, {}, { preset: 'islands#redDotIcon' });
     map.geoObjects.add(destinationPlacemark);
     const address = await reverseGeocode(coords);
     if (address) {
+      destinationAddress = address;
       $('toInput').value = address;
       // destination selected message intentionally omitted to avoid duplicated system messages;
     }
@@ -623,6 +679,15 @@ function appendMessage(text, role='bot') {
     return Number.isFinite(number) ? `${number.toFixed(number >= 100 ? 0 : 1)} км` : '—';
   }
 
+  function formatDurationMinutes(value) {
+    const total = Math.round(Number(value));
+    if (!Number.isFinite(total) || total <= 0) return '—';
+    if (total < 60) return `${total} мин`;
+    const hours = Math.floor(total / 60);
+    const minutes = total % 60;
+    return minutes ? `${hours} ч ${minutes} мин` : `${hours} ч`;
+  }
+
   function renderRoutePlan(plan) {
     const box = $('routePlanResult');
     if (!box || !plan) return;
@@ -637,7 +702,7 @@ function appendMessage(text, role='bot') {
       <div class="route-metrics">
         <div class="route-metric"><span>Дистанция</span><strong>${escapeHtml(formatKm(plan.estimated_distance_km))}</strong></div>
         <div class="route-metric"><span>Энергия</span><strong>${escapeHtml(plan.estimated_energy_needed_kwh)} кВт*ч</strong></div>
-        <div class="route-metric"><span>Остаток без зарядки</span><strong>${escapeHtml(plan.estimated_arrival_battery_without_charging_percent)}%</strong></div>
+        <div class="route-metric"><span>Время с зарядками</span><strong>${escapeHtml(formatDurationMinutes(plan.estimated_trip_minutes))}</strong></div>
         <div class="route-metric"><span>Остановок</span><strong>${stops.length}</strong></div>
       </div>
       ${stops.length ? `<div class="route-stop-list">${stops.map(stop => `
@@ -752,7 +817,6 @@ function appendMessage(text, role='bot') {
     const make = $('makeInput').value.trim();
     const model = $('modelInput').value.trim();
     const battery = $('batteryInput').value.trim();
-    let routeDistanceKm = null;
 
     if (!token) {
       clearRenderedRoute();
@@ -787,6 +851,10 @@ function appendMessage(text, role='bot') {
 
 
     try {
+      const fromCoords = await resolveRoutePoint(from, lastKnownLocation, lastKnownAddress);
+      const toCoords = await resolveRoutePoint(to, destinationCoords, destinationAddress);
+      const routeDistanceKm = await estimateRouteDistanceKm(fromCoords, toCoords);
+
       const plan = await api('/trips/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -797,10 +865,10 @@ function appendMessage(text, role='bot') {
           vehicle_model: model || null,
           battery_percent: battery || null,
           current_battery_percent: Number(battery),
-          from_lat: lastKnownLocation ? lastKnownLocation[0] : null,
-          from_lon: lastKnownLocation ? lastKnownLocation[1] : null,
-          to_lat: destinationCoords ? destinationCoords[0] : null,
-          to_lon: destinationCoords ? destinationCoords[1] : null,
+          from_lat: fromCoords ? fromCoords[0] : null,
+          from_lon: fromCoords ? fromCoords[1] : null,
+          to_lat: toCoords ? toCoords[0] : null,
+          to_lon: toCoords ? toCoords[1] : null,
           route_distance_km: routeDistanceKm,
           preferred_connector: null,
           save_trip: true,
@@ -808,8 +876,8 @@ function appendMessage(text, role='bot') {
       });
       renderRoutePlan(plan);
       renderRouteStopMarkers(plan.stops);
-      const plannedFrom = plan.from_point ? [plan.from_point.lat, plan.from_point.lon] : (lastKnownLocation || from);
-      const plannedTo = plan.to_point ? [plan.to_point.lat, plan.to_point.lon] : (destinationCoords || to);
+      const plannedFrom = plan.from_point ? [plan.from_point.lat, plan.from_point.lon] : (fromCoords || from);
+      const plannedTo = plan.to_point ? [plan.to_point.lat, plan.to_point.lon] : (toCoords || to);
       await renderPlannedRoute(plan, plannedFrom, plannedTo);
       await loadProfile();
       if (currentUser && !currentUser.subscription_active && currentUser.free_queries_left <= 0) {
@@ -821,7 +889,7 @@ function appendMessage(text, role='bot') {
         clearRenderedRoute();
         openSubscriptionModal();
       } else {
-        openAlertModal(t('routeSaveFailed'));
+        openAlertModal(err?.message || t('routeSaveFailed'));
       }
     } finally {
       if (routeBtn) {

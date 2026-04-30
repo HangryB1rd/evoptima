@@ -106,6 +106,9 @@ class RoutePlanOut(BaseModel):
     target_arrival_battery_percent: float
     estimated_energy_needed_kwh: float
     estimated_arrival_battery_without_charging_percent: float
+    estimated_drive_minutes: int | None = None
+    estimated_charging_minutes: int = 0
+    estimated_trip_minutes: int | None = None
     charging_required: bool
     stops: list[ChargingStopOut]
     route_geometry: list[RouteCoordinate] = []

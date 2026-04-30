@@ -20,6 +20,8 @@ MAX_STOP_SEARCH_RADIUS_KM = 75
 MAX_CORRIDOR_SEARCH_RADIUS_KM = 150
 DEFAULT_CHARGER_POWER_KW = 50.0
 MAX_ROUTE_GEOMETRY_POINTS = 1800
+DEFAULT_AVERAGE_SPEED_KMH = 78.0
+CHARGING_STOP_OVERHEAD_MINUTES = 8
 _charger_cache: dict[tuple[float, float, int, int], list[dict[str, Any]]] = {}
 
 
@@ -80,22 +82,51 @@ def _vehicle_defaults(make: str | None, model: str | None) -> tuple[float, float
 
 
 def _geocode(address: str) -> tuple[Point | None, str | None]:
+    address = (address or "").strip()
+    if not address:
+        return None, "Адрес для геокодирования не указан."
     if not settings.YMAPS_API_KEY:
         return None, "YMAPS_API_KEY не настроен, адреса нельзя автоматически превратить в координаты."
     try:
         response = requests.get(
             "https://geocode-maps.yandex.ru/1.x/",
-            params={"apikey": settings.YMAPS_API_KEY, "geocode": address, "format": "json", "results": 1},
+            params={
+                "apikey": settings.YMAPS_API_KEY,
+                "geocode": address,
+                "format": "json",
+                "results": 1,
+                "lang": "ru_RU",
+            },
             timeout=15,
         )
+        error_message = ""
+        if response.status_code >= 400:
+            try:
+                data = response.json()
+                error_message = data.get("message") or data.get("error") or ""
+            except ValueError:
+                error_message = response.text[:200]
+        if response.status_code == 403:
+            return None, (
+                "Yandex Geocoder вернул 403 Forbidden. Проверьте, что ключ в YMAPS_API_KEY "
+                "создан/разрешен именно для Geocoder API и его ограничения подходят для backend-запросов."
+                f"{f' Сообщение Яндекса: {error_message}.' if error_message else ''}"
+            )
+        if response.status_code == 401:
+            return None, (
+                "Yandex Geocoder вернул 401 Unauthorized. Проверьте значение YMAPS_API_KEY."
+                f"{f' Сообщение Яндекса: {error_message}.' if error_message else ''}"
+            )
         response.raise_for_status()
         members = response.json().get("response", {}).get("GeoObjectCollection", {}).get("featureMember", [])
         if not members:
             return None, f"Не удалось найти координаты для адреса: {address}"
         lon, lat = [float(part) for part in members[0]["GeoObject"]["Point"]["pos"].split()]
         return Point(lat=lat, lon=lon), None
-    except Exception:
-        return None, f"Не удалось геокодировать адрес: {address}"
+    except requests.RequestException as exc:
+        return None, f"Не удалось обратиться к Yandex Geocoder для адреса: {address}. {exc.__class__.__name__}"
+    except (KeyError, TypeError, ValueError):
+        return None, f"Yandex Geocoder вернул неожиданный ответ для адреса: {address}"
 
 
 def _haversine_km(a: Point, b: Point) -> float:
@@ -216,12 +247,38 @@ def _search_stop_chargers(
     return [], MAX_STOP_SEARCH_RADIUS_KM
 
 
-def _charge_minutes(charge_kwh: float, power_kw: float | None) -> int | None:
+def _charging_profile(power_kw: float) -> tuple[float, float]:
+    if power_kw <= 2.4:
+        return 0.86, 1.05
+    if power_kw <= 22:
+        return 0.90, 1.08
+    if power_kw <= 60:
+        return 0.93, 1.18
+    if power_kw <= 150:
+        return 0.94, 1.25
+    return 0.95, 1.32
+
+
+def _charge_minutes(charge_kwh: float, power_kw: float | None, target_percent: float | None = None) -> int | None:
     effective_power = power_kw or DEFAULT_CHARGER_POWER_KW
     if effective_power <= 0 or charge_kwh <= 0:
         return None
-    # Real charging slows near high SOC, so add a 20% practical buffer.
-    return max(1, math.ceil(charge_kwh / effective_power * 60 * 1.2))
+    efficiency, taper_factor = _charging_profile(effective_power)
+    if effective_power >= 50 and target_percent is not None:
+        if target_percent > 85:
+            taper_factor += 0.18
+        elif target_percent > 80:
+            taper_factor += 0.10
+    delivered_from_grid_kwh = charge_kwh / efficiency
+    return max(1, math.ceil(delivered_from_grid_kwh / effective_power * 60 * taper_factor))
+
+
+def _estimate_drive_minutes(distance_km: float, osrm_duration_seconds: float | None) -> int | None:
+    if osrm_duration_seconds and osrm_duration_seconds > 0:
+        return max(1, math.ceil(osrm_duration_seconds / 60))
+    if distance_km > 0:
+        return max(1, math.ceil(distance_km / DEFAULT_AVERAGE_SPEED_KMH * 60))
+    return None
 
 
 def _thin_geometry(coordinates: list[list[float]]) -> list[list[float]]:
@@ -303,10 +360,10 @@ def _search_route_corridor_chargers(
     return [], MAX_CORRIDOR_SEARCH_RADIUS_KM, target_distance_km
 
 
-def _build_osrm_geometry(points: list[Point], warnings: list[str]) -> tuple[list[RouteCoordinate], str | None]:
+def _build_osrm_geometry(points: list[Point], warnings: list[str]) -> tuple[list[RouteCoordinate], str | None, float | None]:
     usable_points = [point for point in points if point is not None]
     if len(usable_points) < 2:
-        return [], None
+        return [], None, None
     coords = ";".join(f"{point.lon:.6f},{point.lat:.6f}" for point in usable_points)
     try:
         response = requests.get(
@@ -318,13 +375,14 @@ def _build_osrm_geometry(points: list[Point], warnings: list[str]) -> tuple[list
         routes = response.json().get("routes") or []
         if not routes:
             warnings.append("OSRM не вернул дорожную геометрию маршрута.")
-            return [], None
+            return [], None, None
         coordinates = _thin_geometry(routes[0].get("geometry", {}).get("coordinates") or [])
         geometry = [RouteCoordinate(lat=float(lat), lon=float(lon)) for lon, lat in coordinates]
-        return geometry, "osrm"
+        duration_seconds = routes[0].get("duration")
+        return geometry, "osrm", float(duration_seconds) if isinstance(duration_seconds, (int, float)) else None
     except Exception:
         warnings.append("Не удалось получить дорожную линию маршрута через OSRM.")
-        return [], None
+        return [], None, None
 
 
 def build_route_plan(payload: RoutePlanIn, free_queries_left: int) -> RoutePlanOut:
@@ -439,7 +497,7 @@ def build_route_plan(payload: RoutePlanIn, free_queries_left: int) -> RoutePlanO
                 battery_on_arrival_percent=battery_on_arrival,
                 recommended_charge_to_percent=charge_to,
                 estimated_charge_kwh=charge_kwh,
-                estimated_charge_minutes=_charge_minutes(charge_kwh, power_kw),
+                estimated_charge_minutes=_charge_minutes(charge_kwh, power_kw, charge_to),
                 charger_power_kw=power_kw,
                 connector_match=_connector_matches(best, preferred_connector),
                 vehicle_connector=preferred_connector,
@@ -473,7 +531,15 @@ def build_route_plan(payload: RoutePlanIn, free_queries_left: int) -> RoutePlanO
             geometry_points.append(Point(lat=stop.lat, lon=stop.lon))
     if to_point:
         geometry_points.append(to_point)
-    route_geometry, route_geometry_source = _build_osrm_geometry(geometry_points, warnings)
+    route_geometry, route_geometry_source, osrm_duration_seconds = _build_osrm_geometry(geometry_points, warnings)
+    estimated_drive_minutes = _estimate_drive_minutes(estimated_distance_km, osrm_duration_seconds)
+    charge_session_minutes = sum(stop.estimated_charge_minutes or 0 for stop in stops)
+    estimated_charging_minutes = charge_session_minutes + len(stops) * CHARGING_STOP_OVERHEAD_MINUTES
+    estimated_trip_minutes = (
+        estimated_drive_minutes + estimated_charging_minutes
+        if estimated_drive_minutes is not None
+        else None
+    )
 
     return RoutePlanOut(
         summary=summary,
@@ -486,6 +552,9 @@ def build_route_plan(payload: RoutePlanIn, free_queries_left: int) -> RoutePlanO
         target_arrival_battery_percent=payload.target_arrival_battery_percent,
         estimated_energy_needed_kwh=energy_needed,
         estimated_arrival_battery_without_charging_percent=arrival_without_charging,
+        estimated_drive_minutes=estimated_drive_minutes,
+        estimated_charging_minutes=estimated_charging_minutes,
+        estimated_trip_minutes=estimated_trip_minutes,
         charging_required=charging_required,
         stops=stops,
         route_geometry=route_geometry,

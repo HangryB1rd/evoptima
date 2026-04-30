@@ -48,6 +48,13 @@ def plan_trip(payload: RoutePlanIn, db: Session = Depends(get_db), current_user:
             detail="Free route builds are over. Subscription required."
         )
 
+    plan = build_route_plan(payload, current_user.free_queries_left)
+    if not plan.from_point or not plan.to_point or plan.estimated_distance_km <= 0:
+        detail = "Не удалось построить маршрут: нужны координаты старта, финиша и положительная дистанция."
+        if plan.warnings:
+            detail = " ".join(plan.warnings)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+
     if payload.save_trip:
         db.add(Trip(
             user_id=current_user.id,
@@ -64,4 +71,5 @@ def plan_trip(payload: RoutePlanIn, db: Session = Depends(get_db), current_user:
 
     db.commit()
     db.refresh(current_user)
-    return build_route_plan(payload, current_user.free_queries_left)
+    plan.free_queries_left = current_user.free_queries_left
+    return plan

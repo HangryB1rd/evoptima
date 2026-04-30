@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 from functools import lru_cache
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parents[1]
+load_dotenv(BASE_DIR / ".env")
 
 class Settings:
     APP_NAME: str = os.getenv("APP_NAME", "EVOptima API")
